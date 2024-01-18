@@ -20,6 +20,9 @@
 *.mod
 *.smod
 
+# VS Code config files
+.json
+
 # Compiled Static libraries
 *.lai
 *.la
