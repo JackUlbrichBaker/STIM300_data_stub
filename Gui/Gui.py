@@ -76,9 +76,9 @@ CRC(0b10011101, 0b1001)
 set_appearance_mode("dark")#
 #################################
 
-class port_droplist(CTkOptionMenu):
+class port_droplist(base_frame):
     def __init__(self, master):
-        CTkOptionMenu.__init__(self, master=master)
+        base_frame.__init__(self, master=master)
 
         #inherit the root app from master
         self.root = master.root
@@ -89,11 +89,14 @@ class port_droplist(CTkOptionMenu):
         self.chosen_option_out = StringVar()
 
 
-        self.checklist_in = CTkOptionMenu(master=master, values=self.get_ports(), command=lambda _: self.change_serial_in(new_port= int(self.chosen_option_in.get())), variable = self.chosen_option_in)
-        self.checklist_in.grid(row=1, column=0, sticky="n", pady = [0, 5])
+        self.label_in = CTkLabel(self, text="input port").grid(row=0, column=0, padx=0, pady = [0, 5], sticky="ew")
+        self.checklist_in = CTkOptionMenu(master=self, values=self.get_ports(), command=lambda _: self.change_serial_in(new_port= int(self.chosen_option_in.get())), variable = self.chosen_option_in)
+        self.checklist_in.grid(row=1, column=0, sticky="ew", pady = [0, 5])
 
-        self.checklist_out = CTkOptionMenu(master=master, values=self.get_ports(), command=lambda _: self.change_serial_out(new_port= int(self.chosen_option_out.get())), variable = self.chosen_option_out)
-        self.checklist_out.grid(row=2, column=0, sticky="n", pady = [0, 5])
+
+        self.label_out = CTkLabel(self, text="output port").grid(row=2, column=0, padx=0, pady = [0, 5], sticky="ew")
+        self.checklist_out = CTkOptionMenu(master=self, values=self.get_ports(), command=lambda _: self.change_serial_out(new_port= int(self.chosen_option_out.get())), variable = self.chosen_option_out)
+        self.checklist_out.grid(row=3, column=0, sticky="ew", pady = [0, 5])
 
     def change_serial_in(self, new_port):
         self.serial_in = self.root.change_serial_in(new_port = new_port)
@@ -110,15 +113,6 @@ class port_droplist(CTkOptionMenu):
         # properly impliment when you have time                 #
         #########################################################
         return availiable_ports
-    
-    def update_grid(self, row=2, column=0):
-
-        self.row = row
-        self.column = column
-        #self.checklist_in.grid(row=self.row, column=self.column, padx=0, pady=0)
-        #self.checklist_out.grid(row=self.row+1, column=self.column, padx=0, pady=0)
-
-        self.grid(row = self.row, column = self.column)
     
 
 
@@ -174,7 +168,7 @@ class read_frame(base_frame):
         self.column = 0
 
         
-        self.label = CTkLabel(self, text="INCOMING TEXT")
+        self.label = CTkLabel(self, text="Incoming serial data")
         self.label.grid(row=0, column=0, padx=2, pady=2,sticky="ew")
 
         self.serial_text = scrolledtext.ScrolledText(self, state="disabled")
@@ -220,11 +214,11 @@ class port_label(base_frame):
         self.text = "Currently sending data to port: " + self.serial.name
 
         self.column = 0
-        self.row = 6
+        self.row = 4
 
         self.label = CTkLabel(master=self, text = self.text)
-        self.label.grid(row = self.row, column = self.column, padx=0,pady=[10,5], sticky="s")
-        self.update_grid(row=1, column=1)
+        self.label.grid(row = 0, column = self.column, padx=5,pady=10, sticky="nsew")
+        self.update_grid(row=4, column=0)
 
         self.update_text()
 
@@ -235,7 +229,7 @@ class port_label(base_frame):
         self.serial_out = self.root.serial_out
 
         temp_str = str(self.serial.name)[-1]
-        self.text = "  Currently receiving from port: " + temp_str + " \n " + "Currently sending to port: " + str(self.serial_out.name)[-1]
+        self.text = "Currently receiving from port: " + temp_str + " \n " + "Currently sending to port: " + str(self.serial_out.name)[-1]
         self.label.configure(text=self.text)
         self.master.after(1000, self.update_text)
 
@@ -251,14 +245,14 @@ class MainFrame(base_frame):
 
 
         # add widgets onto the frame
-        self.label = CTkLabel(master=self, text="  Please select the output port below: ")
+        self.label = CTkLabel(master=self, text="  Please select the serial ports below: ")
         self.label.grid(row=0, column=0)
 
         self.checklist = port_droplist(self)
-        self.checklist.update_grid(row=1, column=0)
+        self.checklist.update_grid(row=1, column=0, sticky="nsew")
 
         self.port_label = port_label(self)
-        self.port_label.update_grid(row=2, column=0)
+        self.port_label.update_grid(row=6, column=0, sticky="nsew")
         
         #self.button = CTkButton(self, text = "listen", command = lambda: listen_serial(serial_listen, bytes = 4))
         #self.button.grid(row=1, column=0)
@@ -278,8 +272,8 @@ class App(CTk):
     def __init__(self):
         super().__init__()
 
-        self.serial_in = self.serial_init(0)
-        self.serial_out = self.serial_init(1)
+        self.serial_in = self.serial_init(3)
+        self.serial_out = self.serial_init(4)
 
         #Give the Gui a title
         self.title("STIM300 Serial Interface")
@@ -295,12 +289,11 @@ class App(CTk):
         self.my_frame = MainFrame(master=self)
         self.my_frame.update_grid(row = 0, column = 0)
 
-
         self.read_frame = read_frame(self)
-        self.read_frame.update_grid(row = 0, column = 1)
+        self.read_frame.update_grid(row = 0, column = 1, sticky="nsew")
 
         self.send_frame = send_frame(self)
-        self.send_frame.update_grid(row=2, column=0)
+        self.send_frame.update_grid(row=1, column=0, sticky="ns")
 
 
     def serial_init(self, port_number = 0, baud = 115200, timeout = 0):
@@ -331,6 +324,7 @@ class App(CTk):
 
 
     def change_serial_out(self, new_port, baud = 115200):
+
         if type(new_port) != int:
             print("please input an int")
             return 0
@@ -340,15 +334,16 @@ class App(CTk):
             
         self.serial_out.close()
         temp = self.serial_init(port_number=new_port, baud=baud)
+
         if temp.isOpen():
             print("Now communitcating with port number: " + str(new_port) + "\n")
-            self.serial_out = temp
+            self.serial_out = self.serial_init(port_number=new_port, baud=baud)
+            temp.close()
             return self.serial_out
 
         else:
             print("Invalid Port")
-
-
+            return self.serial_out
 
 
 app = App()

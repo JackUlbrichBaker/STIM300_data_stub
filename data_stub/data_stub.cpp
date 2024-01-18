@@ -104,7 +104,25 @@ vector<int> find_ports(){
     return valid_ports;
 }
 
+void serial_datagram(int serial_port){
+    /*
+    Datagram for serial no "0"
+    */
+    char identifier = 0xB7; // datagram Identifier for full datagram (20 bytes     )
+    char term = 0b00001101;  // CR termination 
+    
+    int datagram_length = 20;
+    char datagram[datagram_length];
+    memset(datagram, 0, datagram_length); // set the datagram to all zeros
+    datagram[0] = identifier;
+    datagram[1] = 0b01001110;  
+    datagram[20] = term;
 
+    for (int i = 0; i < datagram_length; i++){
+            cout << bitset<8>(datagram[i]) << endl;
+            send_serial(&datagram[i], serial_port);
+        }
+}
 /*  This function creates the "normal mode datagram as per the STIM300 datasheet section 5.5.6"*/
 void normal_mode_datagram(int serial_port, bool startup = false, bool dummy_data = true){
 
@@ -198,8 +216,13 @@ int poll_serial_in(int serial_port_in, int serial_port_out){
 
 
     if (last_char == "N" & read_buff[0] == 0b00001101){
-        cout << "HEy" << endl;
+        cout << "Sending Normal Datagram" << endl;
         normal_mode_datagram(serial_port_out, false, true);
+
+    }
+    else if (last_char == "I" & read_buff[0] == 0b00001101){
+        cout << "Sending Serial Datagram" << endl;
+        serial_datagram(serial_port_out);
 
     }
     if(last_char != to_string(read_buff[0])){
@@ -216,7 +239,7 @@ int main(void){
     
 
     std::thread t1(start_ports);
-
+    sleep(1);
     int serial_port = serial_init(1);
 
 
@@ -230,7 +253,7 @@ int main(void){
     float frequency = 1;
     int port_num = 1;
 
-    cout << "What serial port do you want to communicate on?" << endl;
+    cout << "What serial port do you want to send data on?" << endl;
     cin >> port_num;
     
     int serial_port_out = serial_init(port_num);
@@ -244,13 +267,14 @@ int main(void){
     cout << "Sending datagram every " << sleep_seconds << " Seconds" << endl;
     
     
-    
+    // send serial number datagram on startup
+    serial_datagram(serial_port_out);
 
     std::thread auto_thread(auto_normal_mode_datagram, sleep_seconds, serial_port_out, true, true);
     usleep(500);
 
     int pp;
-    cout << "What serial in?" << endl;
+    cout << "What serial port do you want to listen to?" << endl;
     cin >> pp;
 
     int serial_port_in = serial_init(pp);
