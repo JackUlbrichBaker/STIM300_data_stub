@@ -118,7 +118,7 @@ void serial_datagram(int serial_port){
     datagram[1] = 0b01001110;  
     datagram[20] = term;
 
-    for (int i = 0; i < datagram_length; i++){
+    for (int i = 0; i <= datagram_length; i++){
             cout << bitset<8>(datagram[i]) << endl;
             send_serial(&datagram[i], serial_port);
         }
